@@ -61,7 +61,7 @@ namespace m5gfx
 
   M5GFX* M5GFX::_instance = nullptr;
 
-  M5GFX::M5GFX(void) : LGFX_Device()
+  M5GFX::M5GFX(void) : SharpDisplay()
   {
     if (_instance == nullptr) _instance = this;
   }
@@ -1327,6 +1327,21 @@ namespace m5gfx
         }
         bus_spi->release();
         for (auto pin: backup_pins) { pin.restore(); }
+      }
+
+      if (board == board_t::board_SharpDisplay)
+      {
+        ESP_LOGI(LIBRARY_NAME, "[Autodetect] SharpDisplay");
+
+        if (SharpDisplay::init(bus_spi)) {
+          ESP_LOGI(LIBRARY_NAME, "SharpDisplay::init SUCCESS");
+        } else {
+          ESP_LOGE(LIBRARY_NAME, "SharpDisplay::init FAILED");
+        }
+
+        _panel_last.reset(&_panel_sharp);
+
+        goto init_clear;
       }
 
 

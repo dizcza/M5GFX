@@ -51,6 +51,8 @@
 #include "lgfx/v1/LGFX_Sprite.hpp"
 #include "lgfx/v1/LGFX_Button.hpp"
 
+#include "SharpLCD.hpp"
+
 #include <vector>
 #include <memory>
 
@@ -171,7 +173,7 @@ namespace m5gfx
     static constexpr int TFT_SLPOUT  = 0x11;
   }
 
-  class M5GFX : public lgfx::LGFX_Device
+  class M5GFX : public SharpDisplay
   {
   protected:
     static M5GFX* _instance;
