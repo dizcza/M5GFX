@@ -107,7 +107,13 @@ class SharpDisplay : public lgfx::LGFX_Device
 
       setPanel(&_panel_sharp);
 
-      return bus_spi->init();
+      bool success = bus_spi->init();
+      if (success) {
+        ESP_LOGI("SharpDisplay", "SharpDisplay::init OK");
+      } else {
+        ESP_LOGE("SharpDisplay", "SharpDisplay::init FAILED");
+      }
+      return success;
     }
 
 };

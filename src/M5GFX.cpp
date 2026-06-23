@@ -848,6 +848,7 @@ namespace m5gfx
     }
 
     auto board = (board_t)nvs_board;
+    ESP_LOGI(LIBRARY_NAME, "NVS board %u", nvs_board);
 
     int retry = 4;
     do
@@ -1332,15 +1333,8 @@ namespace m5gfx
       if (board == board_t::board_SharpDisplay)
       {
         ESP_LOGI(LIBRARY_NAME, "[Autodetect] SharpDisplay");
-
-        if (SharpDisplay::init(bus_spi)) {
-          ESP_LOGI(LIBRARY_NAME, "SharpDisplay::init SUCCESS");
-        } else {
-          ESP_LOGE(LIBRARY_NAME, "SharpDisplay::init FAILED");
-        }
-
+        SharpDisplay::init(bus_spi);
         _panel_last.reset(&_panel_sharp);
-
         goto init_clear;
       }
 
@@ -1459,6 +1453,14 @@ namespace m5gfx
 // ESP_LOGD(LIBRARY_NAME, "pkg_ver : %02x  /  board:%d", (int)pkg_ver, (int)board);
     switch (pkg_ver) {
     case 0: // EFUSE_PKG_VERSION_ESP32S3:     // QFN56
+
+      if (board == board_t::board_SharpDisplay)
+      {
+        ESP_LOGI(LIBRARY_NAME, "[Autodetect] SharpDisplay");
+        SharpDisplay::init(bus_spi);
+        _panel_last.reset(&_panel_sharp);
+        goto init_clear;
+      }
 
       if (board == 0 || board == board_t::board_M5StackCoreS3 || board == board_t::board_M5StackCoreS3SE
           || board == board_t::board_M5StackChan)
