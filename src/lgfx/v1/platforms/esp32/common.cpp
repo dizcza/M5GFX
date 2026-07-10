@@ -589,24 +589,10 @@ namespace lgfx
       if (spi_sclk >= 0) {
         gpio_lo(spi_sclk); // ここでLOWにしておくことで、pinMode変更によるHIGHパルスが出力されるのを防止する (CSなしパネル対策);
       }
-#if defined (ARDUINO) && __has_include (<SPI.h>) // Arduino ESP32
-      if (spi_host == default_spi_host)
-      {
-        SPI.end();
-        SPI.begin(spi_sclk, spi_miso, spi_mosi);
-        _spi_handle[spi_host] = SPI.bus();
-      }
-      if (_spi_handle[spi_host] == nullptr)
-      {
-        auto spi_num = spi_port;
-#if defined ( CONFIG_IDF_TARGET_ESP32S3 ) || defined ( CONFIG_IDF_TARGET_ESP32P4 )
-        spi_num = HSPI;
-        if (spi_host == SPI2_HOST) { spi_num = FSPI; }
-#endif
-        _spi_handle[spi_host] = spiStartBus(spi_num, SPI_CLK_EQU_SYSCLK, 0, 0);
-      }
-
-#endif
+// Arduino SPI.begin()/spiStartBus() path disabled: spiStartBus() resets the SPI
+// peripheral after the ESP-IDF spi_master driver has claimed it, and the Arduino
+// HAL mutex is invisible to other IDF bus users (e.g. SDSPI). Locking must go
+// through spi_device_acquire_bus() so the bus can be shared with the SD card.
 
  // バスの設定にはESP-IDFのSPIドライバを使用する。;
       if (_spi_dev_handle[spi_host] == nullptr)
@@ -769,9 +755,8 @@ namespace lgfx
 
     void beginTransaction(int spi_host)
     {
-#if defined (ARDUINO) // Arduino ESP32
-      spiSimpleTransaction(_spi_handle[spi_host]);
-#else // ESP-IDF
+      // Use the ESP-IDF bus lock in Arduino builds too, so other IDF devices
+      // on the bus (SDSPI) are mutually excluded with the panel.
       if (_spi_dev_handle[spi_host]) {
         if (ESP_OK != spi_device_acquire_bus(_spi_dev_handle[spi_host], portMAX_DELAY)) {
           ESP_LOGW("LGFX", "Failed to spi_device_acquire_bus. ");
@@ -780,7 +765,6 @@ namespace lgfx
         writereg(SPI_DMA_CONF_REG((spi_host + 1)), 0); /// Clear previous transfer
 #endif
       }
-#endif
     }
 
     void beginTransaction(int spi_host, uint32_t freq, int spi_mode)
@@ -831,11 +815,7 @@ namespace lgfx
     void endTransaction(int spi_host)
     {
       if (_spi_dev_handle[spi_host]) {
-#if defined (ARDUINO) // Arduino ESP32
-        spiEndTransaction(_spi_handle[spi_host]);
-#else // ESP-IDF
         spi_device_release_bus(_spi_dev_handle[spi_host]);
-#endif
       }
     }
 

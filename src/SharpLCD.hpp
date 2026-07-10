@@ -86,6 +86,10 @@ class SharpDisplay : public lgfx::LGFX_Device
         cfg.pin_mosi   = _pin_mosi;
         cfg.pin_sclk   = _pin_sck;
         cfg.pin_miso   = _pin_miso;
+        // No DMA: the SPI bus is shared with the ESP-IDF SDSPI driver, which
+        // owns the GDMA channel. CPU-FIFO writes are sufficient for the small
+        // monochrome framebuffer.
+        cfg.dma_channel = 0;
         bus_spi->config(cfg);
         _panel_sharp.bus(bus_spi);
       }

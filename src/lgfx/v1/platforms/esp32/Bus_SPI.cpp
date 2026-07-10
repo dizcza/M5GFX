@@ -204,7 +204,12 @@ namespace lgfx
     int peri_sel = SOC_GDMA_TRIG_PERIPH_SPI2;
 #endif
 
-    int assigned_dma_ch = search_dma_out_ch(peri_sel);
+    // Only adopt the GDMA channel when DMA was requested for this bus.
+    // When the SPI bus was initialized by someone else (e.g. the application
+    // shares it with the ESP-IDF SDSPI driver), the channel found here belongs
+    // to the IDF spi_master driver; driving its OUT_LINK registers directly
+    // corrupts the driver state and hangs its next transaction.
+    int assigned_dma_ch = _cfg.dma_channel ? search_dma_out_ch(peri_sel) : -1;
 
     if (assigned_dma_ch >= 0)
     { // DMAチャンネルが特定できたらそれを使用する;
@@ -322,9 +327,9 @@ namespace lgfx
     if (_dma_ch) { spicommon_dmaworkaround_idle(_dma_ch); }
 #endif
     if (_cfg.use_lock) spi::endTransaction(_cfg.spi_host);
-#if defined (ARDUINO) // Arduino ESP32
-    *_spi_user_reg = SPI_USR_MOSI | SPI_USR_MISO | SPI_DOUTDIN; // for other SPI device (e.g. SD card)
-#endif
+    // Register restore for Arduino SD removed: it wrote SPI_USER_REG after the
+    // lock release, racing any IDF device (SDSPI) that acquires the bus in between.
+    // The IDF spi_master driver reconfigures registers per transaction anyway.
   }
 
   void Bus_SPI::wait(void)
