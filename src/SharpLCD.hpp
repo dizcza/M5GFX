@@ -32,9 +32,10 @@ class SharpDisplay : public lgfx::LGFX_Device
 {
   protected:
     lgfx::Panel_SharpLCD _panel_sharp;
-    uint8_t _pin_sck = -1;
-    uint8_t _pin_mosi = -1;
-    uint8_t _pin_ss = -1;
+    int16_t _pin_sck = -1;
+    int16_t _pin_mosi = -1;
+    int16_t _pin_ss = -1;
+    int16_t _pin_miso = -1;
     uint16_t _width = 400;
     uint16_t _height = 240;
     uint32_t _freq_write = 4000000;
@@ -57,11 +58,13 @@ class SharpDisplay : public lgfx::LGFX_Device
     }
 
     // Must be called before init()
-    void define(uint8_t pin_sck, uint8_t pin_mosi, uint8_t pin_ss, uint16_t width, uint16_t height, uint32_t freq_write = 4000000)
+    // Pass pin_miso (-1) if SD card not used
+    void define(int16_t pin_sck, int16_t pin_mosi, int16_t pin_ss, int16_t pin_miso, uint16_t width, uint16_t height, uint32_t freq_write = 4000000)
     {
       _pin_sck = pin_sck;
       _pin_mosi = pin_mosi;
       _pin_ss = pin_ss;
+      _pin_miso = pin_miso;
       _width = width;
       _height = height;
       _freq_write = freq_write;
@@ -82,6 +85,7 @@ class SharpDisplay : public lgfx::LGFX_Device
         cfg.freq_write = _freq_write;
         cfg.pin_mosi   = _pin_mosi;
         cfg.pin_sclk   = _pin_sck;
+        cfg.pin_miso   = _pin_miso;
         bus_spi->config(cfg);
         _panel_sharp.bus(bus_spi);
       }
